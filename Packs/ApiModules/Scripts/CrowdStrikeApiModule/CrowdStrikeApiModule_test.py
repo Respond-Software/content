@@ -7,6 +7,8 @@ import pytest
 class ResMocker:
     def __init__(self, http_response):
         self.http_response = http_response
+        self.status_code = 400
+        self.reason = 'error'
         self.ok = False
 
     def json(self):
@@ -15,16 +17,18 @@ class ResMocker:
 
 @pytest.mark.parametrize('http_response, output', [
     (MULTI_ERRORS_HTTP_RESPONSE, MULTIPLE_ERRORS_RESULT),
-    (NO_ERRORS_HTTP_RESPONSE, "")
+    (NO_ERRORS_HTTP_RESPONSE, "Error in API call [400] - error\n")
 ])
 def test_handle_errors(http_response, output, mocker):
     """Unit test
     Given
     - raw response of the http request
     When
-    - there are or there are no errors
+    - 1. there are multiple errors in the http request
+    - 2. there are no errors in the http request
     Then
-    - show the exception content
+    - 1. show the exception content
+    - 2. show no errors
     """
     mocker.patch.object(CrowdStrikeClient, '_generate_token')
     params = {

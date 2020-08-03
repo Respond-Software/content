@@ -17,6 +17,7 @@ class Client:
     """
     def __init__(self, params):
         self.cs_client = CrowdStrikeClient(params=params)
+        self.threshold = params.get('threshold')
 
     def check_quota_status(self):
         return self.cs_client.check_quota_status()
@@ -56,21 +57,23 @@ def test_module(client: Client):
     """
     output = client.check_quota_status()
 
-    error = output.get("errors")
+    error = output.get('errors')
     if error:
         return error[0]
 
-    meta = output.get("meta")
+    meta = output.get('meta')
     if meta is not None:
-        quota = meta.get("quota")
+        quota = meta.get('quota')
         if quota is not None:
-            total = quota.get("total")
-            used = quota.get("used")
+            total = quota.get('total')
+            used = quota.get('used')
             if total <= used:
-                raise Exception(f"Quota limitation has been reached: {used}")
+                raise Exception(f'Quota limitation has been reached: {used}')
             else:
+                client.cs_client.http_request('GET', f'intel/combined/indicators/v1', params={'limit': 1})
+                client.cs_client.http_request('GET', f'intel/combined/actors/v1', params={'limit': 1})
                 return 'ok'
-    raise Exception("Quota limitation is unreachable")
+    raise Exception('Quota limitation is unreachable')
 
 
 def file_command(client: Client):
