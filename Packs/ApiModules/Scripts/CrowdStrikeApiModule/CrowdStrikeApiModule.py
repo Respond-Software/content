@@ -27,12 +27,12 @@ class CrowdStrikeClient(BaseClient):
         :param res: the request's response
         :return: None
         """
-        err_msg = 'Error in API call [{}] - {}'.format(res.status_code, res.reason)
+        err_msg = 'Error in API call [{}] - {}\n'.format(res.status_code, res.reason)
         try:
             # Try to parse json error response
             error_entry = res.json()
             errors = error_entry.get("errors", [])
-            err_msg += '\n' + '\n'.join(f"{error['code']}: {error['message']}" for error in errors)
+            err_msg += '\n'.join(f"{error['code']}: {error['message']}" for error in errors)
             raise DemistoException(err_msg)
         except ValueError:
             err_msg += '\n{}'.format(res.text)

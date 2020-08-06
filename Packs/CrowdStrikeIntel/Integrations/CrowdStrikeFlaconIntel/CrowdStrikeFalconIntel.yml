@@ -153,21 +153,21 @@ script:
       description: Search all fields for the given data
     - name: name
       description: Search based on actor name
-    - name: desc
+    - name: description
       description: Search based on description
-    - name: minLastModifiedDate
-      description: Search range from modified date. Dates are formatted as YYYY-MM-DD.
-    - name: maxLastModifiedDate
+    - name: created_date
+      description: Search range from created date. Dates are formatted as YYYY-MM-DD.
+    - name: max_last_modified_date
       description: Search range to modified date. Dates are formatted as YYYY-MM-DD.
-    - name: minLastActivityDate
+    - name: min_last_activity_date
       description: Search range from activity date. Dates are formatted as YYYY-MM-DD.
-    - name: maxLastActivityDate
+    - name: max_last_activity_date
       description: Search range to activity date. Dates are formatted as YYYY-MM-DD.
     - name: origins
       description: Search by origins separated by ","
-    - name: targetCountries
+    - name: target_countries
       description: Search by target countries separated by ","
-    - name: targetIndustries
+    - name: tagret_industries
       description: Search by target industries separated by ","
     - name: motivations
       description: Search by motivations separated by ","
