@@ -19,7 +19,7 @@ class Client:
     def __init__(self, params):
         self._cs_client = CrowdStrikeClient(params=params)
         self._threshold = params.get('threshold')
-        self.query_params = ['offset', 'limit', 'sort', 'q', 'include_deleted']
+        self.query_params = ['offset', 'limit', 'sort', 'q']
         self.date_params = {
             'created_date': {'operator': '', 'raw_name': 'created_date'},
             'max_last_modified_date': {'operator': '<=', 'api_key': 'last_modified_date'},
@@ -76,8 +76,8 @@ class Client:
     def cs_indicators(self, args):
         return self._cs_client.http_request('GET', 'intel/combined/indicators/v1', params=self.build_params(args))
 
-    def cs_reports(self):
-        pass
+    def cs_reports(self, args):
+        return self._cs_client.http_request('GET', 'intel/combined/reports/v1', params=self.build_params(args))
 
     def cs_report_pdf(self):
         pass
@@ -133,69 +133,61 @@ def cs_actors_command(client: Client):
     res = client.cs_actors(demisto.args())
     md = '## Falcon Intel Actor search\n'
     resources = res.get('resources', {})
-    if resources:
-        for r in resources:
-            image = r.get('image', {})
-            image_url = image.get('url')
-            name = r.get('name')
-            actor_id = r.get('id')
-            url = r.get('url')
-            slug = r.get('slug')
-            short_description = r.get('short_description')
-            first_activity_date = r.get('first_activity_date')
-            last_activity_date = r.get('last_activity_date')
-            active = r.get('active')
-            known_as = r.get('known_as')
-            target_industries = r.get('target_industries')
-            target_countries = r.get('target_countries')
-            origins = r.get('origins')
-            motivations = r.get('motivations')
-            capability = r.get('capability', {})
-            capability_value = capability.get('value')
-            group = r.get('group')
-            region = r.get('region', {})
-            region_value = region.get('value')
-            kill_chain = r.get('kill_chain')
 
-            if image_url:
-                md += '![' + name + '](' + image_url + ' "' + name + '")\n'
-            md += '### ' + name + '\n'
-            md += '- ID: [' + str(actor_id) + '](' + url + ')\n'
-            md += '- Slug: ' + slug + '\n'
-            md += '- Short description: ' + short_description + '\n'
-            md += '- First/Last activity: ' + timestamp_to_datestring(first_activity_date) + ' / ' + \
-                  timestamp_to_datestring(last_activity_date) + '\n'
-            md += '- Active: ' + str(active) if active is not None else '- Active: Unknown'
+    if not resources:
+        return 'No actors found.', {}, res
+
+    for r in resources:
+        image_url = r.get('image', {}).get('url')
+        name = r.get('name')
+        actor_id = r.get('id')
+        url = r.get('url')
+        slug = r.get('slug')
+        short_description = r.get('short_description')
+        first_activity_date = r.get('first_activity_date')
+        last_activity_date = r.get('last_activity_date')
+        active = r.get('active')
+        known_as = r.get('known_as')
+        target_industries = r.get('target_industries')
+        target_countries = r.get('target_countries')
+        origins = r.get('origins')
+        motivations = r.get('motivations')
+        capability = r.get('capability', {}).get('value')
+        group = r.get('group')
+        region = r.get('region', {}).get('value')
+        kill_chain = r.get('kill_chain')
+
+        if image_url:
+            md += '![' + name + '](' + image_url + ' "' + name + '")\n'
+
+        md += '### ' + name + '\n'
+        md += '- ID: [' + str(actor_id) + '](' + url + ')\n'
+        md += '- Slug: ' + slug + '\n'
+        md += '- Short description: ' + short_description + '\n'
+        md += '- First/Last activity: ' + timestamp_to_datestring(first_activity_date) + ' / ' + \
+              timestamp_to_datestring(last_activity_date) + '\n'
+        md += '- Active: ' + str(active) + '\n' if active is not None else ''
+        md += '- Known as: ' + known_as + '\n' if known_as else ''
+        md += '- Target industries: ' + get_values(target_industries) + '\n' if target_industries else ''
+        md += '- Target countries: ' + get_values(target_countries) + '\n' if target_countries else ''
+        md += '- Origins: ' + get_values(origins) + '\n' if origins else ''
+        md += '- Motivations: ' + get_values(motivations) + '\n' if motivations else ''
+        md += '- Capability: ' + capability + '\n' if capability else ''
+        md += '- Group: ' + group + '\n' if group else ''
+        md += '- Region: ' + region + '\n' if region else ''
+
+        if kill_chain:
+            md += '#### Kill chain\n'
+            for kc_field in kill_chain:
+                if 'rich_text' in kc_field and kc_field.index('rich_text') == 0:
+                    continue
+                md += '- ' + string_to_table_header(kc_field) + ': ' + kill_chain.get(kc_field)
             md += '\n'
-            md += '- Known as: ' + known_as if known_as else 'Unknown'
-            md += '\n'
-            md += '-  Target industries: ' + take_value(target_industries) if target_industries else ''
-            md += '\n'
-            md += '- Target countries: ' + take_value(target_countries) if target_countries else ''
-            md += '\n'
-            md += '- Origins: ' + take_value(origins) if origins else ''
-            md += '\n'
-            md += '- Motivations: ' + take_value(motivations) if motivations else ''
-            md += '\n'
-            md += '- Capability: ' + capability_value if capability_value else '- Capability: Unknown'
-            md += '\n'
-            md += '- Group: ' + group if group else '- Group: Unknown'
-            md += '\n'
-            md += '- Region: ' + region_value if region_value else '- Region: Unknown'
-            md += '\n'
-            if kill_chain:
-                md += '#### Kill chain\n'
-                for kc_field in kill_chain:
-                    if 'rich_text' in kc_field and kc_field.index('rich_text') == 0:
-                        continue
-                    md += '- ' + string_to_table_header(kc_field) + ': ' + kill_chain.get(kc_field)
-                md += '\n'
-    else:
-        md = 'No actors found.'
+
     return md, {}, res
 
 
-def take_value(l: list) -> str:
+def get_values(l: list) -> str:
     nl = [i.get('value') for i in l]
     return ', '.join(nl)
 
@@ -205,7 +197,8 @@ def cs_indicators_command(client: Client):
 
 
 def cs_reports_command(client: Client):
-    pass
+    res = client.cs_reports(demisto.args())
+    # print(res)
 
 
 def cs_report_pdf_command(client: Client):

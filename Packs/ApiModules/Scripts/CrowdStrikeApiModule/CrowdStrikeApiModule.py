@@ -15,10 +15,7 @@ class CrowdStrikeClient(BaseClient):
         super().__init__(base_url="https://api.crowdstrike.com/", verify=not params.get('insecure', False),
                          ok_codes=tuple(), proxy=params.get('proxy', False))  # type: ignore[misc]
         self._token = self._generate_token()
-        self._headers = {
-            'Authorization': 'bearer ' + self._token,
-            'Content-Type': 'application/json'
-        }
+        self._headers = {'Authorization': 'bearer ' + self._token}
 
     @staticmethod
     def _error_handler(res: requests.Response):
@@ -31,8 +28,9 @@ class CrowdStrikeClient(BaseClient):
         try:
             # Try to parse json error response
             error_entry = res.json()
-            errors = error_entry.get("errors", [])
-            err_msg += '\n'.join(f"{error['code']}: {error['message']}" for error in errors)
+            errors = error_entry.get('errors', [])
+            err_msg += '\n'.join(f"{error.get('code')}: {error.get('message')}" for  # pylint: disable=no-member
+                                 error in errors)
             raise DemistoException(err_msg)
         except ValueError:
             err_msg += '\n{}'.format(res.text)
