@@ -198,7 +198,7 @@ def cs_indicators_command(client: Client):
 
 def cs_reports_command(client: Client):
     res = client.cs_reports(demisto.args())
-    # print(res)
+    print(res)
 
 
 def cs_report_pdf_command(client: Client):
